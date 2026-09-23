@@ -1,0 +1,217 @@
+openapi: 3.1.0
+info:
+  title: Relationship Visualizer API
+  version: 1.0.0
+  description: REST API for parsing PBIP semantic models in TMDL format and computing graph paths.
+servers:
+  - url: http://localhost:8787/api
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+  /model:
+    get:
+      summary: Parse and return a semantic model graph
+      parameters:
+        - in: query
+          name: folder
+          required: true
+          schema:
+            type: string
+          description: Absolute path to the `.SemanticModel` folder.
+      responses:
+        '200':
+          description: Parsed semantic model
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SemanticModelResponse'
+        '400':
+          description: Invalid request or inaccessible folder
+        '500':
+          description: Parsing failure
+  /paths:
+    get:
+      summary: Compute all simple paths between two tables
+      parameters:
+        - in: query
+          name: folder
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: source
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: target
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Path analysis result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  source:
+                    type: string
+                  target:
+                    type: string
+                  totalPaths:
+                    type: integer
+                  ambiguous:
+                    type: boolean
+                  paths:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PathResult'
+        '400':
+          description: Invalid request
+        '500':
+          description: Path computation failure
+components:
+  schemas:
+    MeasureDefinition:
+      type: object
+      required: [name, expression]
+      properties:
+        name:
+          type: string
+        expression:
+          type: string
+    TableNode:
+      type: object
+      required: [name, columns, measures, kind, degree]
+      properties:
+        name:
+          type: string
+        columns:
+          type: array
+          items:
+            type: string
+        measures:
+          type: array
+          items:
+            $ref: '#/components/schemas/MeasureDefinition'
+        kind:
+          type: string
+          enum: [fact, dimension]
+        degree:
+          type: integer
+    RelationshipEdge:
+      type: object
+      required: [id, fromTable, fromColumn, toTable, toColumn, cardinality, direction, isActive, sourceFile]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+          nullable: true
+        fromTable:
+          type: string
+        fromColumn:
+          type: string
+        toTable:
+          type: string
+        toColumn:
+          type: string
+        cardinality:
+          type: string
+        direction:
+          type: string
+          enum: [single, both]
+        isActive:
+          type: boolean
+        sourceFile:
+          type: string
+    MetricsSummary:
+      type: object
+      required: [totalTables, totalRelationships, totalActiveRelationships, totalInactiveRelationships, totalMeasures]
+      properties:
+        totalTables:
+          type: integer
+        totalRelationships:
+          type: integer
+        totalActiveRelationships:
+          type: integer
+        totalInactiveRelationships:
+          type: integer
+        totalMeasures:
+          type: integer
+    GraphAnalysis:
+      type: object
+      required: [disconnectedTables, factTables, dimensionTables, relationshipIssues]
+      properties:
+        disconnectedTables:
+          type: array
+          items:
+            type: string
+        factTables:
+          type: array
+          items:
+            type: string
+        dimensionTables:
+          type: array
+          items:
+            type: string
+        relationshipIssues:
+          type: object
+          required: [inactiveCount, bidirectionalCount, multipleRelationshipPairs]
+          properties:
+            inactiveCount:
+              type: integer
+            bidirectionalCount:
+              type: integer
+            multipleRelationshipPairs:
+              type: array
+              items:
+                type: string
+    PathResult:
+      type: object
+      required: [nodes, edges, hopCount, containsInactiveRelationship]
+      properties:
+        nodes:
+          type: array
+          items:
+            type: string
+        edges:
+          type: array
+          items:
+            type: string
+        hopCount:
+          type: integer
+        containsInactiveRelationship:
+          type: boolean
+    SemanticModelResponse:
+      type: object
+      required: [folderPath, tables, relationships, metrics, analysis]
+      properties:
+        folderPath:
+          type: string
+        tables:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/TableNode'
+        relationships:
+          type: array
+          items:
+            $ref: '#/components/schemas/RelationshipEdge'
+        metrics:
+          $ref: '#/components/schemas/MetricsSummary'
+        analysis:
+          $ref: '#/components/schemas/GraphAnalysis'

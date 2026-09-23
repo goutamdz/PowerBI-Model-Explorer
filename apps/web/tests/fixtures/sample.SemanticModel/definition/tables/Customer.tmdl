@@ -1,0 +1,3 @@
+table Customer
+  column CustomerKey
+  column CustomerName

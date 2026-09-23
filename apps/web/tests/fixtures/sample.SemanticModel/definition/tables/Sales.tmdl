@@ -1,0 +1,5 @@
+table Sales
+  column SalesKey
+  column CustomerKey
+  column ProductKey
+  measure Total Sales = SUM ( Sales[SalesKey] )

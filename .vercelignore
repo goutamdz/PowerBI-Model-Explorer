@@ -1,0 +1,7 @@
+apps/web/demo-source/
+apps/web/tests/
+apps/web/scripts/
+apps/web/dist/
+specs/
+.specify/
+.env*

@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "types": ["node", "vitest/globals"]
+  },
+  "include": [
+    "vite.config.ts",
+    "tailwind.config.ts",
+    "scripts/**/*.ts",
+    "tests/**/*.ts",
+    "src/demo/model.json",
+    "src/model/tmdl/**/*.ts",
+    "src/model/analysis/**/*.ts",
+    "src/model/types.ts"
+  ]
+}

@@ -1,0 +1,31 @@
+relationship Customer_Sales
+  fromColumn: Sales[CustomerKey]
+  toColumn: Customer[CustomerKey]
+  fromCardinality: many
+  toCardinality: one
+  isActive: true
+  crossFilteringBehavior: oneDirection
+
+relationship Sales_Product
+  fromColumn: Sales[ProductKey]
+  toColumn: Product[ProductKey]
+  fromCardinality: many
+  toCardinality: one
+  isActive: true
+  crossFilteringBehavior: oneDirection
+
+relationship Customer_Returns
+  fromColumn: Returns[CustomerKey]
+  toColumn: Customer[CustomerKey]
+  fromCardinality: many
+  toCardinality: one
+  isActive: true
+  crossFilteringBehavior: oneDirection
+
+relationship Returns_Product
+  fromColumn: Returns[ProductKey]
+  toColumn: Product[ProductKey]
+  fromCardinality: many
+  toCardinality: one
+  isActive: false
+  crossFilteringBehavior: bothDirections

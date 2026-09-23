@@ -1,0 +1,17 @@
+{
+  "name": "relationvisualizer",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "apps/web"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace @relationvisualizer/web",
+    "build": "npm run build --workspace @relationvisualizer/web",
+    "test": "npm run test --workspaces",
+    "lint": "npm run lint --workspaces"
+  },
+  "allowScripts": {
+    "esbuild@0.27.7": true
+  }
+}

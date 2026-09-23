@@ -1,0 +1,262 @@
+table 'About'
+	column 'Key'
+	column 'Order'
+	column 'Value'
+
+table 'Calendar'
+	column 'Date'
+	column 'Day'
+	column 'Day Name'
+	column 'Day of Week'
+	column 'Fiscal Quarter'
+	column 'Fiscal Year'
+	column 'Is Weekend'
+	column 'Month'
+	column 'Month Name'
+	column 'Quarter'
+	column 'Week Number'
+	column 'Year'
+	column 'Year-Month'
+
+table 'Customer'
+	column 'Address'
+	column 'Age'
+	column 'Birthday'
+	column 'City'
+	column 'Continent'
+	column 'Country'
+	column 'Country Code'
+	column 'Customer'
+	column 'CustomerKey'
+	column 'Gender'
+	column 'State'
+	column 'State Code'
+	column 'Zip Code'
+	measure '# Customers' =
+			COUNTROWS('Customer')
+
+table 'Field Parameter'
+	column 'Field Parameter'
+	column 'Field Parameter Fields'
+	column 'Field Parameter Order'
+
+table 'Product'
+	column 'Brand'
+	column 'Category'
+	column 'Category Code'
+	column 'Color'
+	column 'Manufacturer'
+	column 'Product'
+	column 'Product Code'
+	column 'ProductKey'
+	column 'Subcategory'
+	column 'Subcategory Code'
+	column 'SupplierKey'
+	column 'Unit Cost'
+	column 'Unit Price'
+	column 'Weight'
+	column 'Weight Unit Measure'
+	measure '# Products' =
+			COUNTROWS('Product')
+
+table 'Sales'
+	column 'Currency Code'
+	column 'CustomerKey'
+	column 'Delivery Date'
+	column 'Environment'
+	column 'Exchange Rate'
+	column 'Line Number'
+	column 'Net Price'
+	column 'Order Date'
+	column 'Order Number'
+	column 'ProductKey'
+	column 'Quantity'
+	column 'StoreKey'
+	column 'Time'
+	column 'Unit Cost'
+	measure '# Customers (w/ Sales)' =
+			DISTINCTCOUNT('Sales'[CustomerKey])
+	measure '# Products (w/ Sales)' =
+			DISTINCTCOUNT('Sales'[ProductKey])
+	measure 'Sales Qty' =
+			sum('Sales'[Quantity])
+	measure 'Sales Amount' =
+			SUMX('Sales', 'Sales'[Quantity] * 'Sales'[Net Price])
+	measure 'Sales Amount (LY)' =
+			IF ([Sales Amount] > 0, CALCULATE([Sales Amount], SAMEPERIODLASTYEAR('Calendar'[Date])))
+	measure 'Sales Amount Avg per Day' =
+			AVERAGEX(VALUES('Calendar'[Date]), [Sales Amount])
+	measure 'Margin' =
+			SUMX (
+			    Sales,
+			    Sales[Quantity]
+			        * ( Sales[Net Price] - Sales[Unit Cost] )
+			)
+	measure 'Margin (LY)' =
+			CALCULATE([Margin], SAMEPERIODLASTYEAR('Calendar'[Date]))
+	measure '# Sales' =
+			COUNTROWS('Sales')
+	measure 'Sales Amount (12M average)' =
+			VAR v_selDate =
+			    MAX ( 'Calendar'[Date] )
+			VAR v_period =
+			    DATESINPERIOD ( 'Calendar'[Date], v_selDate, -12, MONTH )
+			VAR v_result =
+			    CALCULATE ( AVERAGEX ( VALUES ( 'Calendar'[Date] ), [Sales Amount] ), v_period )
+			VAR v_firstDate =
+			    MINX ( v_period, 'Calendar'[Date] )
+			VAR v_lastDateSales =
+			    MAX ( Sales[Order Date] )
+			RETURN
+			    IF ( v_firstDate <= v_lastDateSales, v_result )
+	measure 'Sales Amount (6M average)' =
+			VAR v_selDate =
+			    MAX ( 'Calendar'[Date] )
+			VAR v_period =
+			    DATESINPERIOD ( 'Calendar'[Date], v_selDate, -6, MONTH )
+			VAR v_result =
+			    CALCULATE ( AVERAGEX ( VALUES ( 'Calendar'[Date] ), [Sales Amount] ), v_period )
+			VAR v_firstDate =
+			    MINX ( v_period, 'Calendar'[Date] )
+			VAR v_lastDateSales =
+			    MAX ( Sales[Order Date] )
+			RETURN
+			    IF ( v_firstDate <= v_lastDateSales, v_result )
+	measure 'Margin %' =
+			DIVIDE ( [Margin], [Sales Amount] )
+	measure 'Cost' =
+			SUMX ( Sales, Sales[Quantity] * Sales[Unit Cost] )
+
+table 'Store'
+	column 'Close Date'
+	column 'Country'
+	column 'Country Code'
+	column 'Open Date'
+	column 'Square Meters'
+	column 'State'
+	column 'Status'
+	column 'Store'
+	column 'Store Code'
+	column 'StoreKey'
+	measure '# Stores' =
+			COUNTROWS('Store')
+
+table 'Time Intelligence'
+	column 'Ordinal'
+	column 'Show as'
+
+table 'Product Category'
+	column 'Category Code'
+	column 'Category'
+	column 'Description'
+
+table 'Product Subcategory'
+	column 'Subcategory Code'
+	column 'Subcategory'
+	column 'Category Code'
+	column 'Description'
+
+table 'Supplier'
+	column 'SupplierKey'
+	column 'Supplier'
+	column 'Contact Name'
+	column 'Lead Time Days'
+
+table 'Region'
+	column 'RegionKey'
+	column 'Region'
+	column 'Sales Manager'
+
+table 'Country'
+	column 'Country Code'
+	column 'Country'
+	column 'Currency Code'
+	column 'RegionKey'
+
+relationship 'd4e6dc5a-6f46-443d-ab94-4cc0e10323c6'
+	isActive: true
+	crossFilteringBehavior: oneDirection
+	fromCardinality: many
+	toCardinality: one
+	fromColumn: 'Sales'.'CustomerKey'
+	toColumn: 'Customer'.'CustomerKey'
+
+relationship 'bb5c5591-a0ff-4ce4-a62e-6c5f56006368'
+	isActive: true
+	crossFilteringBehavior: oneDirection
+	fromCardinality: many
+	toCardinality: one
+	fromColumn: 'Sales'.'ProductKey'
+	toColumn: 'Product'.'ProductKey'
+
+relationship '55a6f513-c6f2-4d1c-b8aa-46edeaeb23f2'
+	isActive: true
+	crossFilteringBehavior: oneDirection
+	fromCardinality: many
+	toCardinality: one
+	fromColumn: 'Sales'.'StoreKey'
+	toColumn: 'Store'.'StoreKey'
+
+relationship '079ad58b-2f43-efa0-7fb6-5775474da9b9'
+	isActive: true
+	crossFilteringBehavior: oneDirection
+	fromCardinality: many
+	toCardinality: one
+	fromColumn: 'Sales'.'Order Date'
+	toColumn: 'Calendar'.'Date'
+
+relationship '92b8a424-f739-c57d-a8de-be6b9ea34685'
+	isActive: false
+	crossFilteringBehavior: oneDirection
+	fromCardinality: many
+	toCardinality: one
+	fromColumn: 'Sales'.'Delivery Date'
+	toColumn: 'Calendar'.'Date'
+
+relationship 'ProductSubcategory_ProductCategory'
+	isActive: true
+	crossFilteringBehavior: oneDirection
+	fromCardinality: many
+	toCardinality: one
+	fromColumn: 'Product Subcategory'.'Category Code'
+	toColumn: 'Product Category'.'Category Code'
+
+relationship 'Product_ProductSubcategory'
+	isActive: true
+	crossFilteringBehavior: oneDirection
+	fromCardinality: many
+	toCardinality: one
+	fromColumn: 'Product'.'Subcategory Code'
+	toColumn: 'Product Subcategory'.'Subcategory Code'
+
+relationship 'Product_Supplier'
+	isActive: true
+	crossFilteringBehavior: oneDirection
+	fromCardinality: many
+	toCardinality: one
+	fromColumn: 'Product'.'SupplierKey'
+	toColumn: 'Supplier'.'SupplierKey'
+
+relationship 'Country_Region'
+	isActive: true
+	crossFilteringBehavior: oneDirection
+	fromCardinality: many
+	toCardinality: one
+	fromColumn: 'Country'.'RegionKey'
+	toColumn: 'Region'.'RegionKey'
+
+relationship 'Store_Country'
+	isActive: true
+	crossFilteringBehavior: oneDirection
+	fromCardinality: many
+	toCardinality: one
+	fromColumn: 'Store'.'Country Code'
+	toColumn: 'Country'.'Country Code'
+
+relationship 'Customer_Country'
+	isActive: true
+	crossFilteringBehavior: oneDirection
+	fromCardinality: many
+	toCardinality: one
+	fromColumn: 'Customer'.'Country Code'
+	toColumn: 'Country'.'Country Code'
