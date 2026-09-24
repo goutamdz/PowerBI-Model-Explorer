@@ -155,9 +155,9 @@ For a production-style local preview, run `npm run build`, then `npm run preview
 
 ## Deploy on Vercel
 
-Import the repository and set `apps/web` as the Vercel Root Directory. Use Node.js 22.12+ or 24. The web app's `vercel.json` supplies the Vite build command, `dist` output directory, and production security headers. Repository-root deployments are also supported by the root `vercel.json`. No model-processing server, AI token, or environment variables are needed.
+Import the repository and set `apps/web` as the Vercel Root Directory. Use Node.js 22.12+ or 24. The only Vercel configuration is `apps/web/vercel.json`; it supplies the install command, Vite build command, `dist` output directory, and production security headers. Deploy from `apps/web`, not the repository root. No model-processing server, AI token, or environment variables are needed.
 
-With Root Directory set to `apps/web`, use `npm ci` for installation, `npm run build` for the build, and `dist` for the output directory. Remove any dashboard overrides containing `--prefix apps/web` or `apps/web/dist`; those paths are only for repository-root deployments.
+With Root Directory set to `apps/web`, the settings must be `npm ci` for installation, `npm run build` for the build, and `dist` for the output directory. Do not use `--prefix apps/web` or `apps/web/dist`: paths are already relative to the selected root. After pushing configuration changes, reload the import page for the latest commit. For an existing project, clear any old dashboard overrides and deploy the latest commit rather than redeploying an older failed commit.
 
 The production TypeScript check excludes colocated tests because `.vercelignore` removes their Node scripts and fixtures from deployment uploads. Run `npm run lint` locally to type-check application code, tests, and scripts together, and `npm test` to execute the tests.
 
