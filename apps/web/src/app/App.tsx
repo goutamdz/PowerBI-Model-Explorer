@@ -10,6 +10,7 @@ function pageFromHash(): Page {
 
 export default function App() {
   const [page, setPage] = useState<Page>(pageFromHash);
+  const [workspaceKey, setWorkspaceKey] = useState(0);
 
   useEffect(() => {
     function handleHashChange() {
@@ -31,5 +32,11 @@ export default function App() {
     return <CompareModels onBack={openVisualizer} />;
   }
 
-  return <ModelWorkspace onNavigateCompare={openComparison} />;
+  return (
+    <ModelWorkspace
+      key={workspaceKey}
+      onNavigateHome={() => setWorkspaceKey((key) => key + 1)}
+      onNavigateCompare={openComparison}
+    />
+  );
 }

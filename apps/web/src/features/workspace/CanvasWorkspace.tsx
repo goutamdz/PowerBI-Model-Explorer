@@ -9,6 +9,7 @@ interface CanvasWorkspaceProps {
   metrics: MetricsSummary;
   workspace: WorkspaceState;
   hoverEnabled: boolean;
+  onHome: () => void;
   onSelectTool: (tool: WorkspaceTool) => void;
   onCloseTool: () => void;
   onClearView: () => void;
@@ -37,6 +38,7 @@ export function CanvasWorkspace(props: CanvasWorkspaceProps) {
     <div className="flex h-full min-h-0 flex-col bg-surface">
       <WorkspaceHeader
         modelName={props.modelName}
+        onHome={props.onHome}
         onClearView={props.onClearView}
         onZoomIn={props.onZoomIn}
         onZoomOut={props.onZoomOut}

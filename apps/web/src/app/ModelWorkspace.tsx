@@ -14,10 +14,11 @@ const emptyPaths: PathResult[] = [];
 const emptyTables: string[] = [];
 
 interface ModelWorkspaceProps {
+  onNavigateHome: () => void;
   onNavigateCompare: () => void;
 }
 
-function ModelWorkspace({ onNavigateCompare }: ModelWorkspaceProps) {
+function ModelWorkspace({ onNavigateHome, onNavigateCompare }: ModelWorkspaceProps) {
   const controller = useModelWorkspace();
   const [showGuide, setShowGuide] = useState(false);
   const {
@@ -48,6 +49,7 @@ function ModelWorkspace({ onNavigateCompare }: ModelWorkspaceProps) {
         metrics={model.metrics}
         workspace={workspace}
         hoverEnabled={hoverEnabled}
+        onHome={onNavigateHome}
         onSelectTool={controller.selectTool}
         onCloseTool={controller.closeTool}
         onClearView={controller.clearView}

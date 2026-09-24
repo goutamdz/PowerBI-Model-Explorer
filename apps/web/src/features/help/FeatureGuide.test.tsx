@@ -64,7 +64,7 @@ describe('beginner-friendly feature explanations', () => {
   });
 
   it('explains loading and makes help discoverable on the welcome screen', () => {
-    const html = renderToStaticMarkup(<ModelWorkspace onNavigateCompare={onClose} />);
+    const html = renderToStaticMarkup(<ModelWorkspace onNavigateHome={onClose} onNavigateCompare={onClose} />);
     expect(html).toContain(featureHelp.load.description);
     expect(html).toContain('Feature guide');
     expect(html).toContain(featureHelp.demo.description);

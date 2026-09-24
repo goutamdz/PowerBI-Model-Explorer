@@ -108,6 +108,8 @@ The canvas opens with no panels and an icon-only left toolbar. Use the compact *
 
 Selecting a tool opens one panel at a time in a docked right panel, resizing the graph rather than covering it. On narrow screens, the panel docks below the graph.
 
+Use **Home** in the top bar to leave either a demo or local-model exploration and return to the welcome screen. This clears the current exploration, including selections and open panels, so you can choose another model. It does not modify your model files.
+
 Tables automatically rearrange to use both the width and height of the available canvas when a panel opens or closes, or the window resizes. Compact table cards reduce empty space between relationships without stretching their shapes. **Show whole map** also rearranges the tables; manual positions and zoom are reset on the next canvas resize. Large models and small screens may still require zooming to read individual names.
 
 Automatic layout compares deterministic arrangements and improves table ordering to reduce edge crossings and links passing behind unrelated tables. Disconnected groups are packed into the available space beside or below the connected graph instead of reserving a separate band above it. Parallel relationships use separate curves so active and inactive links remain individually visible. Dense models can still have unavoidable crossings; use focus or path highlighting to isolate the relationships you need.

@@ -1,4 +1,5 @@
 const paths = {
+  home: 'M3 10l9-7 9 7M5 9v12h14V9M9 21v-8h6v8',
   search: 'M21 21l-5-5M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0',
   focus: 'M4 4h16l-6 7v7l-4 3V11L4 4',
   inspect: 'M9 12h6M12 9v6M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5',

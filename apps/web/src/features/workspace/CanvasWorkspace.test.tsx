@@ -17,6 +17,7 @@ const props: ComponentProps<typeof CanvasWorkspace> = {
   metrics: model.metrics,
   workspace: initialWorkspaceState,
   hoverEnabled: true,
+  onHome: noop,
   onSelectTool: noop,
   onCloseTool: noop,
   onClearView: noop,
@@ -31,6 +32,16 @@ const props: ComponentProps<typeof CanvasWorkspace> = {
 };
 
 describe('canvas-first workspace', () => {
+  it('keeps a labeled Home button in the header for demo and local models', () => {
+    for (const modelName of [model.folderPath, 'Local.SemanticModel']) {
+      const html = renderToStaticMarkup(<CanvasWorkspace {...props} modelName={modelName} />);
+      const header = html.slice(html.indexOf('<header'), html.indexOf('</header>'));
+      expect(header).toContain('title="Return to home"');
+      expect(header).toContain('<span>Home</span>');
+      expect(header).toContain(renderToStaticMarkup(<ToolIcon name="home" />));
+    }
+  });
+
   it('starts with a clean canvas and all tools available in a slim toolbar', () => {
     const html = renderToStaticMarkup(<CanvasWorkspace {...props} />);
     expect(html).toContain('Graph content');

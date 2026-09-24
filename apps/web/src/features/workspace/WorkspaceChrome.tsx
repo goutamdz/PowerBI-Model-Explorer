@@ -9,15 +9,19 @@ export const workspaceIconButton = 'flex h-9 w-9 shrink-0 items-center justify-c
 
 interface WorkspaceHeaderProps {
   modelName: string;
+  onHome: () => void;
   onClearView: () => void;
   onZoomIn: () => void;
   onZoomOut: () => void;
   onFit: () => void;
 }
 
-export function WorkspaceHeader({ modelName, onClearView, onZoomIn, onZoomOut, onFit }: WorkspaceHeaderProps) {
+export function WorkspaceHeader({ modelName, onHome, onClearView, onZoomIn, onZoomOut, onFit }: WorkspaceHeaderProps) {
   return (
     <header className="flex h-12 shrink-0 items-center gap-3 border-b border-border bg-panel/60 px-3">
+      <button type="button" onClick={onHome} title="Return to home" className="flex h-8 shrink-0 items-center gap-1.5 rounded-md px-2 text-xs text-slate-400 hover:bg-white/5 hover:text-white focus-visible:outline focus-visible:outline-accent">
+        <ToolIcon name="home" /> <span>Home</span>
+      </button>
       <span className="hidden font-display text-sm font-semibold text-white sm:block">Relationship Visualizer</span>
       <span className="min-w-0 flex-1 truncate text-xs text-slate-400" title={modelName}>{modelName}</span>
       <button type="button" onClick={onClearView} title="Clear search, focus, and path highlights" className="flex h-8 shrink-0 items-center gap-1.5 rounded-md px-2 text-xs text-slate-400 hover:bg-white/5 hover:text-white focus-visible:outline focus-visible:outline-accent">
