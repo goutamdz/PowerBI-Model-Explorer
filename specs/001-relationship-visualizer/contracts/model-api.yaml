@@ -1,6 +1,6 @@
 openapi: 3.1.0
 info:
-  title: Relationship Visualizer API
+  title: Power BI Semantic Model Explorer API
   version: 1.0.0
   description: REST API for parsing PBIP semantic models in TMDL format and computing graph paths.
 servers:

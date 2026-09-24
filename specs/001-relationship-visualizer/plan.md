@@ -1,4 +1,4 @@
-# Implementation Plan: Relationship Visualizer
+# Implementation Plan: Power BI Semantic Model Explorer
 
 **Branch**: `[001-relationship-visualizer]` | **Date**: 2026-04-07 | **Spec**: `/specs/001-relationship-visualizer/spec.md`
 **Input**: Feature specification from `/specs/001-relationship-visualizer/spec.md`

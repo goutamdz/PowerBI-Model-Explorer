@@ -1,6 +1,6 @@
-# Relationship Visualizer
+# Power BI Semantic Model Explorer
 
-Relationship Visualizer analyzes Power BI PBIP semantic models in the browser. Users select a local `.SemanticModel` folder; its TMDL files are read and processed on their device, not uploaded to a server.
+Power BI Semantic Model Explorer analyzes Power BI PBIP semantic models in the browser. Users select a local `.SemanticModel` folder; its TMDL files are read and processed on their device, not uploaded to a server.
 
 ## What it does
 

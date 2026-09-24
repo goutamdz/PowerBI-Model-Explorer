@@ -1,4 +1,4 @@
-# Data Model: Relationship Visualizer
+# Data Model: Power BI Semantic Model Explorer
 
 ## SemanticModelResponse
 

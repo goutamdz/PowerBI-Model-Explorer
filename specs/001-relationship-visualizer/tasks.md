@@ -1,4 +1,4 @@
-# Tasks: Relationship Visualizer
+# Tasks: Power BI Semantic Model Explorer
 
 **Input**: Design documents from `/specs/001-relationship-visualizer/`  
 **Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/model-api.yaml

@@ -16,7 +16,7 @@ export function ModelWelcome({ loading, error, onLoad, onCompare, onGuide }: Mod
       <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-accent/10 text-accent">
         <ToolIcon name="relationships" />
       </div>
-      <h1 className="font-display text-4xl font-bold text-white">Relationship Visualizer</h1>
+      <h1 className="font-display text-4xl font-bold text-white">Power BI Semantic Model Explorer</h1>
       <p className="text-sm leading-relaxed text-slate-300">Explore your Power BI tables, connections, and formulas.</p>
       <p className="text-xs leading-relaxed text-slate-400">{featureHelp.load.description}</p>
       <ModelFolderPicker label={loading ? 'Reading model...' : 'Choose model folder'} disabled={loading} onSelect={onLoad} />

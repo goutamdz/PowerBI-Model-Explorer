@@ -1,4 +1,4 @@
-# Feature Specification: Relationship Visualizer for Power BI Semantic Models
+# Feature Specification: Power BI Semantic Model Explorer
 
 **Feature Branch**: `[001-relationship-visualizer]`  
 **Created**: 2026-04-07  

@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import ModelWorkspace from '../../app/ModelWorkspace';
@@ -12,6 +13,11 @@ import { MapLegend } from '../canvas/MapLegend';
 const onClose = () => {};
 
 describe('beginner-friendly feature explanations', () => {
+  it('uses the product name in the browser title', () => {
+    const html = readFileSync(new URL('../../../index.html', import.meta.url), 'utf8');
+    expect(html).toContain('<title>Power BI Semantic Model Explorer</title>');
+  });
+
   it('keeps feature descriptions short and crisp', () => {
     for (const feature of Object.values(featureHelp)) {
       expect(feature.description.length).toBeLessThanOrEqual(85);
@@ -65,6 +71,7 @@ describe('beginner-friendly feature explanations', () => {
 
   it('explains loading and makes help discoverable on the welcome screen', () => {
     const html = renderToStaticMarkup(<ModelWorkspace onNavigateHome={onClose} onNavigateCompare={onClose} />);
+    expect(html).toContain('>Power BI Semantic Model Explorer</h1>');
     expect(html).toContain(featureHelp.load.description);
     expect(html).toContain('Feature guide');
     expect(html).toContain(featureHelp.demo.description);

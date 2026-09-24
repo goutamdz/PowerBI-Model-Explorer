@@ -1,4 +1,4 @@
-# Research: Relationship Visualizer
+# Research: Power BI Semantic Model Explorer
 
 ## Decision 1: Use Express + TypeScript for the backend
 

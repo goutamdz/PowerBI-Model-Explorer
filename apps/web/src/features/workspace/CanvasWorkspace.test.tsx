@@ -36,6 +36,8 @@ describe('canvas-first workspace', () => {
     for (const modelName of [model.folderPath, 'Local.SemanticModel']) {
       const html = renderToStaticMarkup(<CanvasWorkspace {...props} modelName={modelName} />);
       const header = html.slice(html.indexOf('<header'), html.indexOf('</header>'));
+      expect(header).toContain('title="Power BI Semantic Model Explorer"');
+      expect(header).toContain('>Power BI Semantic Model Explorer</span>');
       expect(header).toContain('title="Return to home"');
       expect(header).toContain('<span>Home</span>');
       expect(header).toContain(renderToStaticMarkup(<ToolIcon name="home" />));

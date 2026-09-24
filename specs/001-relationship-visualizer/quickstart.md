@@ -1,4 +1,4 @@
-# Quickstart: Relationship Visualizer
+# Quickstart: Power BI Semantic Model Explorer
 
 ## Prerequisites
 
