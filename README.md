@@ -157,6 +157,10 @@ For a production-style local preview, run `npm run build`, then `npm run preview
 
 Import the repository and set `apps/web` as the Vercel Root Directory. Use Node.js 22.12+ or 24. The web app's `vercel.json` supplies the Vite build command, `dist` output directory, and production security headers. Repository-root deployments are also supported by the root `vercel.json`. No model-processing server, AI token, or environment variables are needed.
 
+With Root Directory set to `apps/web`, use `npm ci` for installation, `npm run build` for the build, and `dist` for the output directory. Remove any dashboard overrides containing `--prefix apps/web` or `apps/web/dist`; those paths are only for repository-root deployments.
+
+The production TypeScript check excludes colocated tests because `.vercelignore` removes their Node scripts and fixtures from deployment uploads. Run `npm run lint` locally to type-check application code, tests, and scripts together, and `npm test` to execute the tests.
+
 Do not reintroduce upload endpoints, cloud AI calls, or analytics that collect model metadata without changing the privacy contract. Hosting the frontend does not move user-model processing off the device.
 
 ## Bundled demo
