@@ -7,7 +7,7 @@ import { analyzeLocalPaths, compareLocalModels, loadLocalModel, suggestLocalImpr
 import { parseSemanticModelFiles } from './tmdl/tmdlCore';
 import { collectFilesRecursive } from '../../scripts/lib/fs';
 
-const fixturePath = fileURLToPath(new URL('../../tests/fixtures/sample.SemanticModel/', import.meta.url));
+const fixturePath = fileURLToPath(new URL('./fixtures/sample.SemanticModel/', import.meta.url));
 
 async function sampleFiles() {
   const paths = await collectFilesRecursive(path.join(fixturePath, 'definition'), '.tmdl');

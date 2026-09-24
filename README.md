@@ -75,7 +75,7 @@ The answers exist in TMDL, but reviewing many files manually is slow and error-p
 
 ## What It Solves
 
-Power BI Semantic Model Explorer turns a local `.SemanticModel` folder into an interactive map. The analysis runs in your browser. **Your model stays on your device and is never uploaded to the cloud.**
+Power BI Semantic Model Explorer turns a local `.SemanticModel` folder into an interactive map. **Everything runs locally** in your browser. **Your model stays on your device and is never uploaded to the cloud.**
 
 - **A visual model map** for tables and relationships.
 - **Model metrics** for tables, relationships, measures, and active or inactive links.

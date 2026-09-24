@@ -18,7 +18,10 @@ export function ModelWelcome({ loading, error, onLoad, onCompare, onGuide }: Mod
       </div>
       <h1 className="font-display text-4xl font-bold text-white">Power BI Semantic Model Explorer</h1>
       <p className="text-sm leading-relaxed text-slate-300">Explore your Power BI tables, connections, and formulas.</p>
-      <p className="text-xs leading-relaxed text-slate-400">{featureHelp.load.description}</p>
+      <p className="text-xs leading-relaxed text-slate-400">
+        <strong className="font-semibold text-emerald-300">Everything runs locally.</strong>{' '}
+        {featureHelp.load.description}
+      </p>
       <ModelFolderPicker label={loading ? 'Reading model...' : 'Choose model folder'} disabled={loading} onSelect={onLoad} />
       <div className="flex items-center gap-3">
         <span className="h-px flex-1 bg-border" />
