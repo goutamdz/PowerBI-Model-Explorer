@@ -1,7 +1,7 @@
 export const featureHelp = {
   load: {
     title: 'Open your Power BI model',
-    description: 'Choose a .SemanticModel folder. Files stay on your device.',
+    description: 'Choose a .SemanticModel folder. Your model is never uploaded to the cloud.',
   },
   demo: {
     title: 'Explore demo model',
