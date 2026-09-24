@@ -5,49 +5,38 @@ export const featureHelp = {
   },
   demo: {
     title: 'Explore demo model',
-    description: 'Try a 13-table sample model. No setup needed.',
+    description: 'Open the sample model to try tools without choosing files.',
   },
   search: {
     title: 'Find a table',
-    description: 'Search by name to highlight tables on the map.',
+    description: 'Search by name, then select a result to locate its table.',
   },
   focus: {
     title: 'Focus on selected tables',
-    description: 'Explore your selected tables and the relationships between them.',
+    description: 'Add tables to highlight them and the links between them.',
   },
   inspect: {
     title: 'Table Deep Dive',
-    description: 'Inspect direct relationships, matching columns, and filter directions for a table.',
+    description: 'Choose a table to highlight its direct neighbors and linked columns.',
   },
   paths: {
     title: 'Trace filter paths',
-    description: 'Follow filters between tables, directly or through other tables.',
+    description: 'Choose start and destination; Trace paths highlights connecting routes.',
   },
   relationships: {
     title: 'Browse relationships',
-    description: 'List linked columns, filter directions, and relationship settings.',
+    description: 'View linked columns, filter directions, and active or inactive status.',
   },
   details: {
     title: 'Inspect columns and formulas',
-    description: 'Click a table to explore its columns and DAX calculations.',
+    description: 'Click a table on the map to read columns and DAX.',
   },
   checks: {
     title: 'Check model structure',
-    description: 'Review relationship settings. AI integration is a potential future enhancement.',
+    description: 'Select Run model checks to get local, advisory suggestions.',
   },
   compare: {
-    title: 'Compare model relationships',
-    description: 'Find added, missing, or changed relationships between two models.',
+    title: 'Compare two models',
+    description: 'Choose two folders; Compare relationships lists added, removed, or changed links.',
   },
 } as const;
-
-export const modelTerms = [
-  { term: 'Relationship', definition: 'A link between columns in two tables. It allows a filter on one table to affect related rows in another.' },
-  { term: 'Filter path / transitive connection', definition: 'A route through one or more relationships. Category -> Product -> Sales is a two-hop path; each hop is one relationship.' },
-  { term: 'Multiple paths', definition: 'More than one table route connects your chosen start and destination. Review which relationships are active before deciding whether filters are ambiguous.' },
-  { term: 'Active / inactive', definition: 'An active relationship is used by default. An inactive one needs to be enabled for a calculation, for example with USERELATIONSHIP in DAX.' },
-  { term: 'Cardinality (row matching)', definition: '1 means a unique key; * means values can repeat. *:1 means many rows on the first side can match one row on the second.' },
-  { term: 'Filter direction', definition: 'An arrow shows which table can filter the other. A two-way relationship allows filtering in both directions.' },
-  { term: 'Fact / dimension', definition: 'A fact table usually holds events or transactions; a dimension describes things such as products or dates. The map guesses these roles from structure, names, and measures.' },
-  { term: 'Measure / DAX', definition: 'A measure is a calculation such as total sales. DAX is the formula language used by Power BI. This app displays formulas; it does not run them.' },
-] as const;

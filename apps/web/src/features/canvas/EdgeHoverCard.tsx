@@ -6,7 +6,13 @@ export interface EdgeHoverInfo {
   y: number;
 }
 
-function HoverRow({ label, value, className = 'truncate text-slate-300' }: { label: string; value: string; className?: string }) {
+interface HoverRowProps {
+  label: string;
+  value: string;
+  className?: string;
+}
+
+function HoverRow({ label, value, className = 'truncate text-slate-300' }: HoverRowProps) {
   return (
     <div className="flex items-center justify-between gap-2">
       <span className="font-mono text-[9px] uppercase tracking-wider text-slate-500">{label}</span>
@@ -32,9 +38,17 @@ export function EdgeHoverCard({ detail, x, y }: EdgeHoverInfo) {
         <HoverRow label="Column A" value={`${detail.source}[${detail.fromColumn}]`} />
         <HoverRow label="Column B" value={`${detail.target}[${detail.toColumn}]`} />
         <HoverRow label="Row matching" value={detail.cardinality} className="font-mono text-cyan-300" />
-        <HoverRow label="Filter direction" value={bidirectional ? 'Both ways' : 'One way'} className={bidirectional ? 'text-amber-400' : 'text-slate-300'} />
+        <HoverRow
+          label="Filter direction"
+          value={bidirectional ? 'Both ways' : 'One way'}
+          className={bidirectional ? 'text-amber-400' : 'text-slate-300'}
+        />
         <p className="mt-2 text-[11px] text-slate-400">1 = unique key; * = repeated values. Click the line for an explanation.</p>
-        <HoverRow label="Status" value={active ? 'Active' : 'Inactive'} className={active ? 'text-emerald-400' : 'text-red-400'} />
+        <HoverRow
+          label="Status"
+          value={active ? 'Active' : 'Inactive'}
+          className={active ? 'text-emerald-400' : 'text-red-400'}
+        />
       </div>
     </div>
   );

@@ -13,6 +13,7 @@ interface PendingRequest {
 let worker: Worker | undefined;
 let requestId = 0;
 const pending = new Map<number, PendingRequest>();
+const REQUEST_TIMEOUT_MS = 60_000;
 
 function resetWorker(message: string) {
   worker?.terminate();
@@ -24,23 +25,32 @@ function resetWorker(message: string) {
   pending.clear();
 }
 
-function getWorker(): Worker {
-  if (!worker) {
-    worker = new Worker(new URL('./modelWorker.ts', import.meta.url), { type: 'module' });
-    worker.onmessage = ({ data }: MessageEvent<ModelWorkerResponse>) => {
-      const request = pending.get(data.id);
-      if (!request) return;
-      clearTimeout(request.timeout);
-      pending.delete(data.id);
-      if (data.error) request.reject(new Error(data.error));
-      else request.resolve(data.result);
-    };
-    worker.onerror = (event) => {
-      event.preventDefault();
-      resetWorker('The local processing worker failed. Please try loading the model again.');
-    };
-    worker.onmessageerror = () => resetWorker('The local processing worker could not read the model data.');
+function receiveWorkerResponse({ data }: MessageEvent<ModelWorkerResponse>): void {
+  const request = pending.get(data.id);
+  if (!request) {
+    return;
   }
+  clearTimeout(request.timeout);
+  pending.delete(data.id);
+  if (data.error) {
+    request.reject(new Error(data.error));
+  } else {
+    request.resolve(data.result);
+  }
+}
+
+function getWorker(): Worker {
+  if (worker) {
+    return worker;
+  }
+
+  worker = new Worker(new URL('./modelWorker.ts', import.meta.url), { type: 'module' });
+  worker.onmessage = receiveWorkerResponse;
+  worker.onerror = (event) => {
+    event.preventDefault();
+    resetWorker('The local processing worker failed. Please try loading the model again.');
+  };
+  worker.onmessageerror = () => resetWorker('The local processing worker could not read the model data.');
   return worker;
 }
 
@@ -48,7 +58,8 @@ function processLocally<T>(message: ModelRequest): Promise<T> {
   return new Promise((resolve, reject) => {
     const processor = getWorker();
     const id = ++requestId;
-    const timeout = setTimeout(() => resetWorker('Local analysis timed out. Try a smaller model.'), 60000);
+    // A blocked worker cannot finish its other requests either, so reset them together.
+    const timeout = setTimeout(() => resetWorker('Local analysis timed out. Try a smaller model.'), REQUEST_TIMEOUT_MS);
     pending.set(id, { resolve: (value) => resolve(value as T), reject, timeout });
     try {
       processor.postMessage({ ...message, id });
@@ -61,13 +72,13 @@ function processLocally<T>(message: ModelRequest): Promise<T> {
 }
 
 export function fetchModel(files: File[]): Promise<SemanticModelResponse> {
-  return processLocally({
-    type: 'load',
-    files: files.filter((file) => file.name.toLowerCase().endsWith('.tmdl')).map((file) => ({
+  const tmdlFiles = files
+    .filter((file) => file.name.toLowerCase().endsWith('.tmdl'))
+    .map((file) => ({
       path: file.webkitRelativePath,
       file,
-    })),
-  });
+    }));
+  return processLocally({ type: 'load', files: tmdlFiles });
 }
 
 export function fetchDemoModel(): Promise<SemanticModelResponse> {

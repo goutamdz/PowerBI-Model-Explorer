@@ -24,7 +24,9 @@ export function SuggestionsPanel({ suggestions, loading }: SuggestionsPanelProps
           <h3 className="mt-1 text-xs font-semibold text-slate-200">{suggestion.title}</h3>
           <p className="mt-2 text-xs leading-relaxed text-slate-400">{suggestion.description}</p>
           <div className="mt-2 flex flex-wrap gap-1">
-            {suggestion.tables.map((table) => <span key={table} className="break-all rounded bg-white/5 px-2 py-1 text-[10px] text-slate-400">{table}</span>)}
+            {suggestion.tables.map((table) => (
+              <span key={table} className="break-all rounded bg-white/5 px-2 py-1 text-[10px] text-slate-400">{table}</span>
+            ))}
           </div>
         </article>
       ))}

@@ -30,6 +30,10 @@ function highlightedEdge(selector: string, color: string, width: number, extra: 
 }
 
 export function createGraphStyles(tableCount: number): StylesheetStyle[] {
+  return [...createTableStyles(tableCount), ...createRelationshipStyles()];
+}
+
+function createTableStyles(tableCount: number): StylesheetStyle[] {
   const tableSize = getTableSize(tableCount);
   return [
     {
@@ -65,40 +69,91 @@ export function createGraphStyles(tableCount: number): StylesheetStyle[] {
     {
       selector: 'node.hover',
       style: {
-        'border-width': 3, 'border-color': '#93c5fd', 'background-opacity': 1,
-        'font-size': 15, 'font-weight': 600, 'text-background-opacity': 0.9,
-        'text-background-color': '#0f172a', 'text-background-padding': '4px', 'z-index': 999,
+        'border-width': 3,
+        'border-color': '#93c5fd',
+        'background-opacity': 1,
+        'font-size': 15,
+        'font-weight': 600,
+        'text-background-opacity': 0.9,
+        'text-background-color': '#0f172a',
+        'text-background-padding': '4px',
+        'z-index': 999,
       },
     },
     {
       selector: 'node.pathNode',
-      style: { 'background-color': '#0e7490', 'border-color': '#22d3ee', 'border-width': 2.5, color: '#ffffff', 'font-size': 14 },
+      style: {
+        'background-color': '#0e7490',
+        'border-color': '#22d3ee',
+        'border-width': 2.5,
+        color: '#ffffff',
+        'font-size': 14,
+      },
     },
     {
       selector: 'node.pathEndpoint',
-      style: { 'background-color': '#047857', 'border-color': '#34d399', 'border-width': 3, color: '#ffffff', 'font-size': 16, 'font-weight': 700 },
+      style: {
+        'background-color': '#047857',
+        'border-color': '#34d399',
+        'border-width': 3,
+        color: '#ffffff',
+        'font-size': 16,
+        'font-weight': 700,
+      },
     },
     {
       selector: 'node.searchMatch',
-      style: { 'background-color': '#92400e', 'border-color': '#f59e0b', 'border-width': 2.5, color: '#fef3c7' },
+      style: {
+        'background-color': '#92400e',
+        'border-color': '#f59e0b',
+        'border-width': 2.5,
+        color: '#fef3c7',
+      },
     },
     {
       selector: 'node.focusNode',
-      style: { 'background-color': '#581c87', 'border-color': '#a855f7', 'border-width': 3, color: '#f3e8ff', 'font-size': 14, 'font-weight': 600 },
+      style: {
+        'background-color': '#581c87',
+        'border-color': '#a855f7',
+        'border-width': 3,
+        color: '#f3e8ff',
+        'font-size': 14,
+        'font-weight': 600,
+      },
     },
     {
       selector: 'node.inspectorNode',
-      style: { 'background-color': '#064e3b', 'border-color': '#10b981', 'border-width': 3.5, color: '#d1fae5', 'font-size': 15, 'font-weight': 700 },
+      style: {
+        'background-color': '#064e3b',
+        'border-color': '#10b981',
+        'border-width': 3.5,
+        color: '#d1fae5',
+        'font-size': 15,
+        'font-weight': 700,
+      },
     },
+  ];
+}
+
+function createRelationshipStyles(): StylesheetStyle[] {
+  return [
     {
       selector: 'edge',
       style: {
-        label: '', 'source-label': '', 'target-label': '',
-        'curve-style': 'unbundled-bezier',
-        'control-point-distances': [20], 'control-point-weights': [0.5],
-        width: 1.8, 'line-color': '#3b82f6', 'line-opacity': 0.7,
-        'target-arrow-color': '#3b82f6', 'target-arrow-shape': 'triangle',
-        'arrow-scale': 1.2, 'source-arrow-shape': 'none', 'overlay-opacity': 0,
+        label: '',
+        'source-label': '',
+        'target-label': '',
+        // Separate parallel links so inactive relationships are not hidden underneath active ones.
+        'curve-style': 'bezier',
+        'control-point-step-size': 40,
+        width: 1.8,
+        'line-color': '#3b82f6',
+        'line-opacity': 0.7,
+        'target-arrow-color': '#3b82f6',
+        'target-arrow-shape': 'triangle',
+        'arrow-scale': 1.2,
+        'source-arrow-shape': 'none',
+        'overlay-opacity': 0,
         'transition-property': 'line-color, width, opacity, target-arrow-color, line-opacity',
         'transition-duration': 250,
       },
@@ -106,8 +161,12 @@ export function createGraphStyles(tableCount: number): StylesheetStyle[] {
     {
       selector: 'edge[active = "false"]',
       style: {
-        'line-style': 'dashed', 'line-dash-pattern': [8, 5], width: 1.5,
-        'line-color': '#ef4444', 'line-opacity': 0.6, 'target-arrow-color': '#ef4444',
+        'line-style': 'dashed',
+        'line-dash-pattern': [8, 5],
+        width: 1.5,
+        'line-color': '#ef4444',
+        'line-opacity': 0.6,
+        'target-arrow-color': '#ef4444',
       },
     },
     { selector: 'edge[direction = "both"]', style: { 'source-arrow-shape': 'triangle', 'source-arrow-color': '#3b82f6' } },
@@ -117,7 +176,10 @@ export function createGraphStyles(tableCount: number): StylesheetStyle[] {
     highlightedEdge('edge.pathEdge', '#06b6d4', 3, { color: '#a5f3fc', opacity: 1 }),
     highlightedEdge('edge.focusEdge', '#a855f7', 2.5, { color: '#e9d5ff' }),
     highlightedEdge('edge.inspectorEdge', '#10b981', 3.5, {
-      color: '#d1fae5', 'font-size': 12, 'text-background-opacity': 0.95, 'text-background-padding': '4px',
+      color: '#d1fae5',
+      'font-size': 12,
+      'text-background-opacity': 0.95,
+      'text-background-padding': '4px',
     }),
   ];
 }

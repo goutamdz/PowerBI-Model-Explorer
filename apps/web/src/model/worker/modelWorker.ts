@@ -3,26 +3,24 @@ import demo from '../../demo/model.json';
 import { analyzeLocalPaths, compareLocalModels, loadLocalModel, suggestLocalImprovements } from '../localModel';
 import type { ModelRequest, ModelWorkerResponse } from './protocol';
 
+async function processRequest(request: ModelRequest): Promise<unknown> {
+  switch (request.type) {
+    case 'load':
+      return loadLocalModel(request.files);
+    case 'demo':
+      return parseSemanticModelFiles(demo.name, demo.files);
+    case 'paths':
+      return analyzeLocalPaths(request.model, request.source, request.target);
+    case 'suggestions':
+      return suggestLocalImprovements(request.model);
+    case 'compare':
+      return compareLocalModels(request.modelA, request.modelB);
+  }
+}
+
 self.onmessage = async ({ data }: MessageEvent<ModelRequest & { id: number }>) => {
   try {
-    let result: unknown;
-    switch (data.type) {
-      case 'load':
-        result = await loadLocalModel(data.files);
-        break;
-      case 'demo':
-        result = parseSemanticModelFiles(demo.name, demo.files);
-        break;
-      case 'paths':
-        result = analyzeLocalPaths(data.model, data.source, data.target);
-        break;
-      case 'suggestions':
-        result = suggestLocalImprovements(data.model);
-        break;
-      case 'compare':
-        result = compareLocalModels(data.modelA, data.modelB);
-        break;
-    }
+    const result = await processRequest(data);
     self.postMessage({ id: data.id, result } satisfies ModelWorkerResponse);
   } catch (error) {
     self.postMessage({

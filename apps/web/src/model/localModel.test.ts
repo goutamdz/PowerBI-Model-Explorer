@@ -155,4 +155,52 @@ describe('local model processing', () => {
     relationship.cardinality = relationship.cardinality.split(':').reverse().join(':');
     expect(compareLocalModels(model, modified).totalDiffs).toBe(0);
   });
+
+  it('rejects multiple selected folders before reading and reports missing tables in discovery order', async () => {
+    const unreadableFile = { text: vi.fn() } as unknown as Blob;
+    await expect(loadLocalModel([
+      { path: 'First/definition/table.tmdl', file: unreadableFile },
+      { path: 'Second/definition/table.tmdl', file: unreadableFile },
+    ])).rejects.toThrow('Select one semantic model folder');
+    expect(unreadableFile.text).not.toHaveBeenCalled();
+    await expect(loadLocalModel([{
+      path: 'First/definition/model.tmdl',
+      file: new Blob(['table Sales\nrelationship Missing\n\tfromColumn: Z.Key\n\ttoColumn: A.Key']),
+    }])).rejects.toThrow('The model is missing table definitions: Z, A.');
+  });
+
+  it('keeps comparison difference ordering and uses the last link for duplicate endpoint pairs', async () => {
+    const model = await loadLocalModel(await sampleFiles());
+    const modified = structuredClone(model);
+    modified.relationships[0] = {
+      ...modified.relationships[0], cardinality: '1:1', direction: 'both', isActive: false,
+    };
+    const original = model.relationships[0];
+    const comparison = compareLocalModels(model, modified);
+    expect(comparison.diffs[0].differences).toEqual([
+      `cardinality: ${original.cardinality} vs 1:1`,
+      `direction: ${original.direction} vs both`,
+      `active: ${original.isActive} vs false`,
+    ]);
+    modified.relationships.push({ ...original });
+    expect(compareLocalModels(model, modified).totalDiffs).toBe(0);
+  });
+
+  it('returns deterministic suggestions in rule order without changing the model', async () => {
+    const model = await loadLocalModel(await sampleFiles());
+    model.relationships[0].cardinality = '*:*';
+    model.analysis.disconnectedTables = ['Helper'];
+    model.analysis.relationshipIssues.multipleRelationshipPairs = ['Customer::Sales'];
+    const before = structuredClone(model);
+    const result = suggestLocalImprovements(model);
+    expect(result.suggestions.map(({ title }) => title)).toEqual([
+      'Review bidirectional filtering',
+      'Review many-to-many relationships',
+      'Check inactive relationships',
+      'Review separate table groups',
+      'Review multiple links between the same tables',
+    ]);
+    expect(suggestLocalImprovements(model)).toEqual(result);
+    expect(model).toEqual(before);
+  });
 });

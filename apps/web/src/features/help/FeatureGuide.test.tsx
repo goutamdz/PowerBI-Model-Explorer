@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import ModelWorkspace from '../../app/ModelWorkspace';
-import { featureHelp, modelTerms } from './featureHelp';
+import { featureHelp } from './featureHelp';
 import { FeatureGuide } from './FeatureGuide';
 import { CompareModels } from '../comparison/CompareModels';
 import { EdgeDetailPopup } from '../relationships/EdgeDetailPopup';
@@ -32,17 +32,35 @@ describe('beginner-friendly feature explanations', () => {
     }
   });
 
-  it('explains every feature and technical term in an accessible guide', () => {
+  it('gives each feature one short instruction without a glossary or walkthrough', () => {
     const html = renderToStaticMarkup(<FeatureGuide onClose={onClose} />);
     expect(html).toContain('aria-labelledby="feature-guide-title"');
     for (const feature of Object.values(featureHelp)) {
       expect(html).toContain(feature.title);
       expect(html).toContain(feature.description);
     }
-    for (const { term } of modelTerms) expect(html).toContain(term);
-    expect(html).toContain('Product Category');
-    expect(html).toContain('2,000 unique table routes');
-    expect(html).toContain('includes inactive relationships');
+    expect(html.match(/<dt\b/g)).toHaveLength(Object.keys(featureHelp).length);
+    expect(html).not.toContain('guide-demo');
+    expect(html).not.toContain('guide-terms');
+    expect(html).not.toContain('future enhancement');
+    expect(html).toContain('Trace paths highlights connecting routes');
+    expect(html).toContain('Run model checks');
+    expect(html).toContain('Compare relationships');
+    expect(html).toContain('Close guide');
+    const visibleText = html.replace(/<[^>]*>/g, ' ').trim();
+    expect(visibleText.split(/\s+/).length).toBeLessThanOrEqual(260);
+  });
+
+  it('keeps essential map controls and limitations visible', () => {
+    const html = renderToStaticMarkup(<FeatureGuide onClose={onClose} />);
+    for (const text of [
+      'Drag to pan', 'Scroll to zoom', 'Click a line', 'Show whole map',
+      'Clear view', 'Close a panel', 'Hover details', 'keep selections',
+      'include inactive relationships', 'up to 2,000 routes',
+      'do not prove active filtering', 'not data or formulas', 'never edit your model',
+    ]) {
+      expect(html).toContain(text);
+    }
   });
 
   it('explains loading and makes help discoverable on the welcome screen', () => {

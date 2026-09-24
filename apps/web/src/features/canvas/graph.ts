@@ -1,8 +1,14 @@
 import type { ElementDefinition } from 'cytoscape';
-import type { PathResult, SemanticModelResponse } from '../../model/types';
+import type { PathResult, SemanticModelResponse, TableNode } from '../../model/types';
 
 export function buildGraphElements(model: SemanticModelResponse): ElementDefinition[] {
-  const nodeElements: ElementDefinition[] = Object.values(model.tables).map((table) => ({
+  const tables = Object.values(model.tables).map(createTableElement);
+  const relationships = createRelationshipElements(model.relationships);
+  return [...tables, ...relationships];
+}
+
+function createTableElement(table: TableNode): ElementDefinition {
+  return {
     data: {
       id: table.name,
       label: table.name,
@@ -11,19 +17,20 @@ export function buildGraphElements(model: SemanticModelResponse): ElementDefinit
       columns: table.columns.length,
       degree: table.degree,
     },
-  }));
+  };
+}
 
-  const edgeElements: ElementDefinition[] = model.relationships.map((relationship) => {
-    // In Power BI TMDL, cross-filter direction is always toColumn's table → fromColumn's table.
-    // The "to" side (primary key / dimension) filters the "from" side (foreign key / fact).
-    // So the Cytoscape edge source = toTable, target = fromTable.
+function createRelationshipElements(relationships: SemanticModelResponse['relationships']): ElementDefinition[] {
+  return relationships.map((relationship) => {
+    // Power BI filters flow from the referenced "to" table to the referencing "from" table.
     const source = relationship.toTable;
     const target = relationship.fromTable;
     const fromColumn = relationship.toColumn;
     const toColumn = relationship.fromColumn;
-    // Swap cardinality sides to match the new source→target order
-    const [origFrom, origTo] = relationship.cardinality.split(':');
-    const cardinality = `${origTo}:${origFrom}`;
+
+    // Cardinality labels must follow the same reversed direction as the arrow.
+    const [fromCardinality, toCardinality] = relationship.cardinality.split(':');
+    const cardinality = `${toCardinality}:${fromCardinality}`;
     const [sourceCard, targetCard] = cardinality.split(':');
 
     return {
@@ -42,8 +49,6 @@ export function buildGraphElements(model: SemanticModelResponse): ElementDefinit
       },
     };
   });
-
-  return [...nodeElements, ...edgeElements];
 }
 
 export function formatPath(path: PathResult): string {
@@ -53,9 +58,13 @@ export function formatPath(path: PathResult): string {
 export function collectAllPathElements(paths: PathResult[]): { nodes: Set<string>; edges: Set<string> } {
   const nodes = new Set<string>();
   const edges = new Set<string>();
-  for (const p of paths) {
-    for (const n of p.nodes) nodes.add(n);
-    for (const e of p.edges) edges.add(e);
+  for (const path of paths) {
+    for (const tableName of path.nodes) {
+      nodes.add(tableName);
+    }
+    for (const relationshipId of path.edges) {
+      edges.add(relationshipId);
+    }
   }
   return { nodes, edges };
 }

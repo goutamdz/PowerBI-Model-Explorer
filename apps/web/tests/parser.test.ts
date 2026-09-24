@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { DEMO_MODEL_PATH } from '../scripts/config.js';
 import { collectFilesRecursive } from '../scripts/lib/fs.js';
 import { parseSemanticModel } from '../scripts/lib/tmdlParser.js';
+import { serializeDemo, validateDemoRoundTrip } from '../scripts/lib/demoSerialization.js';
 import { findAllPaths } from '../src/model/analysis/pathAnalysis.js';
 import { parseSemanticModelFiles } from '../src/model/tmdl/tmdlCore.js';
 import demo from '../src/demo/model.json';
@@ -87,5 +88,94 @@ describe('parseSemanticModel', () => {
       { name: 'Margin', expression: 'SUMX (\n    Sales,\n    Sales[Quantity] * Sales[Price]\n)' },
     ]);
     expect(model.tables.Sales.columns).toEqual(['Price', 'Quantity']);
+  });
+
+  it.each([
+    ['', '*:1'],
+    ['fromCardinality: one', '1:1'],
+    ['toCardinality: many', '*:*'],
+    ['fromCardinality: single\n\ttoCardinality: many', '1:*'],
+    ['fromCardinality: unsupported\n\ttoCardinality: unsupported', '*:1'],
+    ['cardinality: ManyToMany', '*:*'],
+    ['cardinality: many-to-one', '*:1'],
+    ['cardinality: OneToMany', '1:*'],
+    ['cardinality: OneToOne', '1:1'],
+    ['cardinality: 1:*', '1:*'],
+    ['cardinality: unsupported', '*:*'],
+    ['cardinality: manyToOne\n\tfromCardinality: one\n\ttoCardinality: many', '*:1'],
+  ])('preserves cardinality normalization for %j', (properties, cardinality) => {
+    const model = parseSemanticModelFiles('test', [{
+      path: 'definition\\relationships.tmdl',
+      content: `relationship Link\n\tfromColumn: Sales.Key\n\ttoColumn: Product[Key]\n\t${properties}`,
+    }]);
+    expect(model.relationships[0]).toMatchObject({
+      id: 'Sales.Key->Product.Key', cardinality, direction: 'single', isActive: true,
+      sourceFile: 'definition/relationships.tmdl',
+    });
+  });
+
+  it('merges table fragments, excludes auto-date tables, and retains distinct parallel links', () => {
+    const relationship = [
+      'relationship Link',
+      "\tfromColumn: 'Order Lines'.'Product Key'",
+      '\ttoColumn: Product[Key]',
+      '\tcrossFilteringBehavior: bothDirections',
+      '\tisActive: FALSE',
+    ].join('\n');
+    const model = parseSemanticModelFiles('test', [
+      { path: 'first.tmdl', content: [
+        "table 'Order Lines'", "\tcolumn 'Product Key'", '\tcolumn Z',
+        '\tmeasure Total = 1', 'table Product', '\tcolumn Key',
+        'table LocalDateTable_1', '\tcolumn Date', relationship,
+        'relationship AutoDate', '\tfromColumn: LocalDateTable_1.Date', '\ttoColumn: Product.Key',
+        'relationship Incomplete', '\tfromColumn: Product.Key',
+      ].join('\n') },
+      { path: 'second.tmdl', content: [
+        "table 'Order Lines'", '\tcolumn A', '\tcolumn Z', '\tmeasure Total = 2',
+        relationship, relationship.replace('Link', 'Alternate'),
+      ].join('\n') },
+    ]);
+    expect(Object.keys(model.tables)).toEqual(['Order Lines', 'Product']);
+    expect(model.tables['Order Lines'].columns).toEqual(['A', 'Product Key', 'Z']);
+    expect(model.tables['Order Lines'].measures).toEqual([
+      { name: 'Total', expression: '1' }, { name: 'Total', expression: '2' },
+    ]);
+    expect(model.relationships.map((relationship) => relationship.name)).toEqual(['Link', 'Alternate']);
+    expect(model.relationships[0]).toMatchObject({ isActive: false, direction: 'both', sourceFile: 'first.tmdl' });
+    expect(model.analysis.relationshipIssues.multipleRelationshipPairs).toEqual(['Order Lines::Product']);
+  });
+
+  it('finds quoted and case-insensitive DAX references once per measure with literal regex characters', () => {
+    const model = parseSemanticModelFiles('test', [{
+      path: 'model.tmdl',
+      content: [
+        "table 'Sales.2026'", "\tcolumn 'Net+Price'",
+        "\tmeasure First = SUM('Sales.2026'[Net+Price]) + SUM('Sales.2026'[Net+Price])",
+        'table Other',
+        "\tmeasure Second = SUM('sales.2026' [net+price])",
+        "\tmeasure NotAMatch = SUM('SalesX2026'[NetPrice])",
+      ].join('\n'),
+    }]);
+    expect(model.tables['Sales.2026'].columnReferences.map(({ column, referencedIn, sourceTable, referenceType }) =>
+      ({ column, referencedIn, sourceTable, referenceType }),
+    )).toEqual([
+      { column: 'Net+Price', referencedIn: 'First', sourceTable: 'Sales.2026', referenceType: 'measure' },
+      { column: 'Net+Price', referencedIn: 'Second', sourceTable: 'Other', referenceType: 'measure' },
+    ]);
+  });
+
+  it('serializes and validates the demo without source metadata or filesystem writes', async () => {
+    const model = await parseSemanticModel(DEMO_MODEL_PATH);
+    const exported = serializeDemo(model);
+    expect(exported).toEqual(demo);
+    expect(validateDemoRoundTrip(exported, model).metrics).toEqual(model.metrics);
+    const changed = structuredClone(exported);
+    changed.files[0].content += '\ntable Unexpected\n';
+    expect(() => validateDemoRoundTrip(changed, model)).toThrow();
+  });
+
+  it('preserves filesystem adapter error messages for invalid input', async () => {
+    await expect(parseSemanticModel('   ')).rejects.toThrow('Folder path is required.');
+    await expect(parseSemanticModel(path.join(sampleModelPath, 'missing'))).rejects.toThrow();
   });
 });

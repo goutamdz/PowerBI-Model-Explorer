@@ -19,18 +19,41 @@ export function PathFinderPanel({ tableNames, sourceTable, targetTable, loadingP
         <div className="min-w-0 space-y-3">
           <div>
             <label className="mb-1 block text-xs text-slate-300">Starting table</label>
-            <SearchableSelect value={sourceTable} options={tableNames} placeholder="Choose starting table..." onChange={(name) => onChangeTables(name, targetTable)} />
+            <SearchableSelect
+              value={sourceTable}
+              options={tableNames}
+              placeholder="Choose starting table..."
+              onChange={(name) => onChangeTables(name, targetTable)}
+            />
           </div>
           <div>
             <label className="mb-1 block text-xs text-slate-300">Destination table</label>
-            <SearchableSelect value={targetTable} options={tableNames} placeholder="Choose destination table..." onChange={(name) => onChangeTables(sourceTable, name)} />
+            <SearchableSelect
+              value={targetTable}
+              options={tableNames}
+              placeholder="Choose destination table..."
+              onChange={(name) => onChangeTables(sourceTable, name)}
+            />
           </div>
         </div>
-        <button type="button" aria-label="Swap starting and destination tables" title="Swap tables" disabled={!sourceTable && !targetTable} onClick={() => onChangeTables(targetTable, sourceTable)} className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/5 text-slate-400 hover:text-white disabled:opacity-30"><ToolIcon name="swap" /></button>
+        <button
+          type="button"
+          aria-label="Swap starting and destination tables"
+          title="Swap tables"
+          disabled={!sourceTable && !targetTable}
+          onClick={() => onChangeTables(targetTable, sourceTable)}
+          className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/5 text-slate-400 hover:text-white disabled:opacity-30"
+        >
+          <ToolIcon name="swap" />
+        </button>
       </div>
       <div className="flex gap-2">
-        <button type="button" onClick={onFindPaths} disabled={loadingPaths || !sourceTable || !targetTable} className="flex-1 rounded-lg bg-accent px-3 py-2 text-xs font-semibold text-white hover:bg-accentMuted disabled:opacity-40">{loadingPaths ? 'Tracing...' : 'Trace paths'}</button>
-        {pathsResponse ? <button type="button" onClick={() => onChangeTables('', '')} className="rounded-lg px-3 py-2 text-xs text-slate-400 hover:bg-white/5">Clear</button> : null}
+        <button type="button" onClick={onFindPaths} disabled={loadingPaths || !sourceTable || !targetTable} className="flex-1 rounded-lg bg-accent px-3 py-2 text-xs font-semibold text-white hover:bg-accentMuted disabled:opacity-40">
+          {loadingPaths ? 'Tracing...' : 'Trace paths'}
+        </button>
+        {pathsResponse ? (
+          <button type="button" onClick={() => onChangeTables('', '')} className="rounded-lg px-3 py-2 text-xs text-slate-400 hover:bg-white/5">Clear</button>
+        ) : null}
       </div>
       {pathsResponse ? (
         <div role="status" className="space-y-2 text-xs text-slate-400">

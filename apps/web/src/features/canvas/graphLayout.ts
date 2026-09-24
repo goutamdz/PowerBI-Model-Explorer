@@ -1,11 +1,23 @@
-import cytoscape, { type BoundingBox12, type Core } from 'cytoscape';
+import cytoscape, { type Core, type Position } from 'cytoscape';
 import fcose, { type FcoseLayoutOptions } from 'cytoscape-fcose';
+import { getLayoutGeometry, scoreRelationships, type LayoutGeometry } from './layoutGeometry';
+import { untangleRelationships } from './layoutOptimization';
+import { packComponents } from './layoutPacking';
+import { fillCanvas, separateTables } from './layoutSpacing';
 
 cytoscape.use(fcose);
 
 export const mapPadding = 32;
 
+interface LayoutCandidate {
+  score: number;
+  geometry: LayoutGeometry;
+  zoom: number;
+  pan: Position;
+}
+
 export function getTableSize(tableCount: number) {
+  // Shrink dense models gradually without making their labels too small.
   const scale = Math.pow(13 / Math.max(13, tableCount), 0.2);
   return {
     width: Math.max(120, Math.round(156 * scale)),
@@ -13,20 +25,72 @@ export function getTableSize(tableCount: number) {
   };
 }
 
-export function arrangeGraph(cy: Core) {
-  if (cy.nodes().empty() || cy.width() <= 0 || cy.height() <= 0) return;
-  cy.stop(true);
-  // A stable, canvas-shaped seed avoids random layouts on every panel resize.
-  cy.layout({
-    name: 'grid',
-    fit: false,
-    animate: false,
-    boundingBox: { x1: 0, y1: 0, w: cy.width(), h: cy.height() },
-    cols: Math.max(1, Math.ceil(Math.sqrt(cy.nodes().length * cy.width() / cy.height()))),
-    nodeDimensionsIncludeLabels: true,
-    spacingFactor: 1.2,
-  }).run();
-  const options: FcoseLayoutOptions = {
+export function arrangeGraph(graph: Core) {
+  const nodes = graph.nodes();
+  if (nodes.empty() || graph.width() <= 0 || graph.height() <= 0) return;
+  graph.stop(true);
+
+  const forceLayoutOptions = createForceLayoutOptions();
+  const candidateColumns = getCandidateColumns(graph);
+  const components = graph.elements().components().map((component) => component.nodes());
+  let bestLayout: LayoutCandidate | undefined;
+
+  // Compare stable seeds instead of accepting a force layout that hides or crosses links.
+  for (const columns of candidateColumns) {
+    graph.layout({
+      name: 'grid',
+      fit: false,
+      animate: false,
+      boundingBox: { x1: 0, y1: 0, w: graph.width(), h: graph.height() },
+      cols: columns,
+      nodeDimensionsIncludeLabels: true,
+      spacingFactor: 1.2,
+    }).run();
+    graph.layout(forceLayoutOptions).run();
+    separateTables(graph);
+    packComponents(graph, components);
+    fillCanvas(graph, mapPadding);
+
+    const geometry = getLayoutGeometry(graph, components);
+    const candidate: LayoutCandidate = {
+      score: scoreRelationships(geometry),
+      geometry,
+      zoom: graph.zoom(),
+      pan: { ...graph.pan() },
+    };
+    if (isBetterLayout(candidate, bestLayout)) bestLayout = candidate;
+  }
+
+  if (!bestLayout) return;
+  const { geometry, zoom, pan } = bestLayout;
+  untangleRelationships(geometry, bestLayout.score);
+  nodes.positions((_node, index) => geometry.positions[index]);
+  graph.viewport({ zoom, pan });
+  fillCanvas(graph, mapPadding);
+}
+
+function isBetterLayout(candidate: LayoutCandidate, current?: LayoutCandidate) {
+  if (!current) return true;
+  if (candidate.score !== current.score) return candidate.score < current.score;
+  return candidate.zoom > current.zoom;
+}
+
+function getCandidateColumns(graph: Core) {
+  const tableCount = graph.nodes().length;
+  const initialColumns = Math.ceil(Math.sqrt(tableCount * graph.width() / graph.height()));
+  let offsets = [0, 1, 2, -1, -2];
+
+  if (graph.edges().empty()) offsets = [0];
+  else if (tableCount > 100) offsets = [0, 1, 2];
+
+  const columnCounts = offsets.map((offset) => {
+    return Math.max(1, Math.min(tableCount, initialColumns + offset));
+  });
+  return new Set(columnCounts);
+}
+
+function createForceLayoutOptions(): FcoseLayoutOptions {
+  return {
     name: 'fcose',
     quality: 'proof',
     animate: false,
@@ -42,52 +106,4 @@ export function arrangeGraph(cy: Core) {
     nodeDimensionsIncludeLabels: true,
     randomize: false,
   };
-  cy.layout(options).run();
-  separateTables(cy);
-  fillCanvas(cy);
-}
-
-function separateTables(cy: Core) {
-  const placed: BoundingBox12[] = [];
-  const gap = 12;
-  // Force layouts can leave collisions in dense models. Preserve horizontal
-  // positions and vertical order while giving every card guaranteed clearance.
-  const nodes = cy.nodes().sort((a, b) => a.position('y') - b.position('y'));
-  for (const node of nodes) {
-    const bounds = node.boundingBox();
-    let offset = 0;
-    for (const previous of placed) {
-      if (bounds.x1 < previous.x2 + gap && bounds.x2 + gap > previous.x1) {
-        offset = Math.max(offset, previous.y2 + gap - bounds.y1);
-      }
-    }
-    if (offset > 0) node.position('y', node.position('y') + offset);
-    placed.push({ x1: bounds.x1, x2: bounds.x2, y1: bounds.y1 + offset, y2: bounds.y2 + offset });
-  }
-}
-
-function fillCanvas(cy: Core) {
-  const nodes = cy.nodes();
-  cy.fit(nodes, mapPadding);
-  cy.zoom(Math.min(cy.zoom(), 1.5));
-  const bounds = nodes.boundingBox();
-  const positions = nodes.map((node) => node.position());
-  const minX = Math.min(...positions.map((p) => p.x));
-  const maxX = Math.max(...positions.map((p) => p.x));
-  const minY = Math.min(...positions.map((p) => p.y));
-  const maxY = Math.max(...positions.map((p) => p.y));
-  const availableWidth = Math.max(1, cy.width() - 2 * mapPadding) / cy.zoom();
-  const availableHeight = Math.max(1, cy.height() - 2 * mapPadding) / cy.zoom();
-  const spanX = maxX - minX;
-  const spanY = maxY - minY;
-  const outerWidth = bounds.w - spanX;
-  const outerHeight = bounds.h - spanY;
-  // Expand only the spare axis: table shapes and existing separation stay intact.
-  const scaleX = spanX > 0 ? Math.max(1, (availableWidth - outerWidth) / spanX) : 1;
-  const scaleY = spanY > 0 ? Math.max(1, (availableHeight - outerHeight) / spanY) : 1;
-  nodes.positions((node) => ({
-    x: (node.position('x') - minX) * scaleX,
-    y: (node.position('y') - minY) * scaleY,
-  }));
-  cy.center(nodes);
 }

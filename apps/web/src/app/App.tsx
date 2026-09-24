@@ -4,22 +4,32 @@ import { CompareModels } from '../features/comparison/CompareModels';
 
 type Page = 'visualizer' | 'compare';
 
+function pageFromHash(): Page {
+  return window.location.hash === '#compare' ? 'compare' : 'visualizer';
+}
+
 export default function App() {
-  const [page, setPage] = useState<Page>(() =>
-    window.location.hash === '#compare' ? 'compare' : 'visualizer',
-  );
+  const [page, setPage] = useState<Page>(pageFromHash);
 
   useEffect(() => {
-    function onHash() {
-      setPage(window.location.hash === '#compare' ? 'compare' : 'visualizer');
+    function handleHashChange() {
+      setPage(pageFromHash());
     }
-    window.addEventListener('hashchange', onHash);
-    return () => window.removeEventListener('hashchange', onHash);
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
-  if (page === 'compare') {
-    return <CompareModels onBack={() => { window.location.hash = ''; }} />;
+  function openVisualizer() {
+    window.location.hash = '';
   }
 
-  return <ModelWorkspace onNavigateCompare={() => { window.location.hash = '#compare'; }} />;
+  function openComparison() {
+    window.location.hash = '#compare';
+  }
+
+  if (page === 'compare') {
+    return <CompareModels onBack={openVisualizer} />;
+  }
+
+  return <ModelWorkspace onNavigateCompare={openComparison} />;
 }

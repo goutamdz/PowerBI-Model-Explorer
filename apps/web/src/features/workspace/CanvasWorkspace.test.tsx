@@ -3,9 +3,12 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { initialWorkspaceState, workspaceReducer, workspaceTools } from './workspace';
 import { CanvasWorkspace } from './CanvasWorkspace';
+import { WorkspaceToolbar } from './WorkspaceChrome';
 import { RelationshipTable } from '../relationships/RelationshipTable';
+import { SearchTablesPanel } from '../tables/SearchTablesPanel';
 import demo from '../../demo/model.json';
 import { parseSemanticModelFiles } from '../../model/tmdl/tmdlCore';
+import { ToolIcon } from '../../shared/ui/ToolIcon';
 
 const model = parseSemanticModelFiles(demo.name, demo.files);
 const noop = () => {};
@@ -37,7 +40,52 @@ describe('canvas-first workspace', () => {
     for (const tool of workspaceTools) expect(html).toContain(`aria-label="${tool.title}"`);
     expect(html).toContain('aria-label="Hover details"');
     expect(html).toContain('aria-label="Feature guide"');
-    expect(html).toContain('aria-label="Compare model relationships"');
+    expect(html).toContain('aria-label="Compare two models"');
+    expect(html).toContain('aria-label="Expand feature bar"');
+    for (const tool of workspaceTools) expect(html).not.toContain(tool.description);
+  });
+
+  it.each([
+    { expanded: false, hoverEnabled: false },
+    { expanded: false, hoverEnabled: true },
+    { expanded: true, hoverEnabled: false },
+    { expanded: true, hoverEnabled: true },
+  ])('renders expanded=$expanded and hoverEnabled=$hoverEnabled without changing tool selection', ({ expanded, hoverEnabled }) => {
+    const html = renderToStaticMarkup(
+      <WorkspaceToolbar
+        expanded={expanded}
+        onToggleExpanded={noop}
+        selectedTool="search"
+        hoverEnabled={hoverEnabled}
+        toolButtons={{ current: {} }}
+        onSelectTool={noop}
+        onCompare={noop}
+        onToggleHover={noop}
+        onGuide={noop}
+      />,
+    );
+    expect(html).toContain(`aria-label="${expanded ? 'Collapse' : 'Expand'} feature bar"`);
+    expect(html).toContain(`aria-expanded="${expanded}" aria-controls="workspace-toolbar-tools"`);
+    expect(html).toContain('id="workspace-toolbar-tools"');
+    expect(html).toContain('aria-expanded="true" aria-controls="workspace-tool-panel"');
+    expect(html).toContain(`role="switch" aria-checked="${hoverEnabled}"`);
+    expect(html).toContain('aria-label="Compare two models"');
+    const toggle = html.slice(html.indexOf('<button'), html.indexOf('</button>'));
+    expect(toggle).not.toContain('<span');
+    expect(toggle).toContain('h-9 w-9');
+    for (const tool of workspaceTools) {
+      expect(html).toContain(`aria-label="${tool.title}"`);
+      expect(html).not.toContain(tool.description);
+      expect(html.includes(`>${tool.title}</span>`)).toBe(expanded);
+    }
+    for (const label of ['Compare two models', 'Hover details', 'Feature guide']) {
+      expect(html.includes(`>${label}</span>`)).toBe(expanded);
+    }
+    expect(html).toContain(`title="Hover details: ${hoverEnabled ? 'on' : 'off'}"`);
+    expect(html).toContain(renderToStaticMarkup(<ToolIcon name={hoverEnabled ? 'hover' : 'hoverOff'} />));
+    expect(html).not.toContain(renderToStaticMarkup(<ToolIcon name={hoverEnabled ? 'hoverOff' : 'hover'} />));
+    expect(html.includes('inline-flex h-4 w-7')).toBe(expanded);
+    if (expanded) expect(html).toContain(hoverEnabled ? 'translate-x-3' : 'translate-x-0');
   });
 
   it('docks exactly one tool beside the canvas, with a close control', () => {
@@ -60,6 +108,14 @@ describe('canvas-first workspace', () => {
     expect(footer).toContain('2xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]');
     expect(footer.match(/<li\b/g)).toHaveLength(5);
     expect(html).not.toContain('aria-label="Legend"');
+  });
+
+  it('identifies search results as locate actions and marks the selected table', () => {
+    const html = renderToStaticMarkup(<SearchTablesPanel searchTerm="" searchMatches={['Sales', 'Store']} selectedTable="Sales" onSearch={noop} onSelectTable={noop} />);
+    expect(html).toContain('title="Locate Sales on the map"');
+    expect(html).toContain('title="Locate Store on the map"');
+    expect(html.match(/aria-current="true"/g)).toHaveLength(1);
+    expect(html).toContain('2 matching tables');
   });
 
   it('retains the highlighted view when closing and inspecting non-graph tools', () => {

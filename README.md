@@ -24,7 +24,6 @@ Relationship Visualizer analyzes Power BI PBIP semantic models in the browser. U
 ## Project structure
 
 ```text
-api/          # Optional Vercel health endpoint; no model-processing API
 apps/web/     # React UI, browser worker, parser/graph code, tests, tools, and demos
   src/
     app/                  # Routing, workspace coordination, global styles
@@ -39,12 +38,12 @@ apps/web/     # React UI, browser worker, parser/graph code, tests, tools, and d
       model-loading/      # Semantic-model folder picker
       help/               # Feature guide, feature names, glossary
     model/
-      tmdl/               # Browser-safe TMDL parsing
-      analysis/           # Graph analysis and directed path finding
+      tmdl/               # Syntax helpers, table/relationship parsing, column references
+      analysis/           # Graph analysis, paths, comparison, and local suggestions
       worker/             # Worker client, message protocol, worker entry
       localModel.ts       # Loading, comparison, and rule-check operations
       types.ts            # Shared model contracts
-    shared/ui/            # Reusable select and icon components
+    shared/ui/            # Reusable controls and dismissible-panel behavior
     demo/                 # Generated bundled demo (unchanged location)
     main.tsx              # React bootstrap only
   scripts/                # Node-only tools and demo exporter
@@ -56,45 +55,81 @@ Keep feature-specific components and tests together. The app layer coordinates f
 
 Unit tests are colocated with their feature or model module. Cross-feature UI smoke tests remain with the feature guide, and filesystem/parser integration tests remain under `apps/web/tests/`. Prefer direct module imports rather than broad barrel files that can accidentally pull worker code into the UI bundle.
 
+### Reading the code for the first time
+
+Start with [App.tsx](apps/web/src/app/App.tsx), then follow the feature you want to understand:
+
+1. **Open a model:** [ModelWelcome.tsx](apps/web/src/features/model-loading/ModelWelcome.tsx) renders the welcome screen. The folder picker supplies files to the worker; [localModel.ts](apps/web/src/model/localModel.ts) coordinates parsing and analysis.
+2. **Use the workspace:** [ModelWorkspace.tsx](apps/web/src/app/ModelWorkspace.tsx) composes the screen. [useModelWorkspace.ts](apps/web/src/app/useModelWorkspace.ts) owns selections and worker requests, while [WorkspaceToolPanel.tsx](apps/web/src/app/WorkspaceToolPanel.tsx) chooses which tool to display. [WorkspaceChrome.tsx](apps/web/src/features/workspace/WorkspaceChrome.tsx) contains the header, toolbar, and status components.
+3. **Explore details:** table and relationship features render their own panels. [ColumnUsageList.tsx](apps/web/src/features/tables/ColumnUsageList.tsx) shares column-reference presentation, and [useDismissiblePanel.ts](apps/web/src/shared/ui/useDismissiblePanel.ts) shares dismissal behavior.
+4. **Compare models:** [useModelComparison.ts](apps/web/src/features/comparison/useModelComparison.ts) manages requests and loading state. [ComparisonResults.tsx](apps/web/src/features/comparison/ComparisonResults.tsx) displays the results.
+
+Components describe what appears on screen; hooks manage state and effects; model helpers calculate results without React. Named helpers break longer operations into steps, and short comments explain non-obvious reasons rather than repeating the code.
+
 ### Canvas component responsibilities
 
-- `ModelGraph.tsx` connects React to Cytoscape and owns creation/cleanup.
+The following modules live in [features/canvas](apps/web/src/features/canvas):
+
+- `ModelGraph.tsx` renders the canvas container and hover card.
+- `useModelGraph.ts` connects React to Cytoscape and owns graph creation, updates, controls, and cleanup.
 - `graph.ts` converts semantic-model relationships into correctly oriented graph elements.
 - `graphStyles.ts` owns node/edge styles and shared relationship-label styling.
-- `graphLayout.ts` sizes, separates, and arranges tables.
+- `graphLayout.ts` coordinates table sizing and layout candidates.
+- `layoutGeometry.ts` measures crossings and links passing behind table cards.
+- `layoutOptimization.ts` tries a bounded number of table-position swaps.
+- `layoutPacking.ts` fits disconnected groups into spare canvas space.
+- `layoutSpacing.ts` separates cards and expands the arrangement to use the canvas.
 - `graphHighlights.ts` applies inspection, path, focus, and search highlights in priority order.
 - `graphInteractions.ts` binds hover/click handlers and shares one relationship-detail mapping.
-- `graphViewport.ts` handles centered zoom and debounced resize updates.
+- `graphViewport.ts` handles centered zoom, exact-table navigation, and debounced resize updates.
 - `EdgeHoverCard.tsx` renders relationship hover details independently of the graph lifecycle.
 
 Selection callbacks can change without recreating the graph. Hover movement is coalesced into one React update per animation frame; pending frames, listeners, resize timers, and the graph are cleaned up on unmount. Search, focus, path-finding, and model-check panels accept values and callbacks as props so the same UI can be reused without duplicating workspace state.
+
+### Model-processing responsibilities
+
+Follow the data from selected files through the worker into [tmdlCore.ts](apps/web/src/model/tmdl/tmdlCore.ts):
+
+- [syntax.ts](apps/web/src/model/tmdl/syntax.ts) handles identifiers, indentation, declarations, and column references.
+- [tableParser.ts](apps/web/src/model/tmdl/tableParser.ts) reads tables, columns, and measure expressions; [relationshipParser.ts](apps/web/src/model/tmdl/relationshipParser.ts) reads and deduplicates relationships.
+- [columnReferences.ts](apps/web/src/model/tmdl/columnReferences.ts) detects column references in measures without executing DAX.
+- [graphAnalysis.ts](apps/web/src/model/analysis/graphAnalysis.ts) builds adjacency and computes structural metrics. [pathAnalysis.ts](apps/web/src/model/analysis/pathAnalysis.ts) keeps the public graph/path operations.
+- [modelComparison.ts](apps/web/src/model/analysis/modelComparison.ts) compares relationships; [modelSuggestions.ts](apps/web/src/model/analysis/modelSuggestions.ts) applies deterministic advisory rules.
+
+Node tools reuse the same browser-safe parsing logic. [demoSerialization.ts](apps/web/scripts/lib/demoSerialization.ts) handles portable demo output and semantic round-trip checks separately from filesystem access. None of these modules upload a model or contact its data sources.
 
 ## Run locally
 
 ### Find the right feature
 
-Use **Feature guide** on the welcome screen, map, or comparison screen for a plain-language glossary and step-by-step demo examples.
+Use **Feature guide** on the welcome screen, map, or comparison screen for one short instruction per feature, basic map controls, and essential limitations. It is a quick reference, not a glossary or tutorial.
 
-The canvas opens with no panels. A slim left toolbar opens one tool at a time in a docked right panel, resizing the graph rather than covering it. On narrow screens, the panel docks below the graph. Hover over icons to see their names.
+The canvas opens with no panels and an icon-only left toolbar. Use the compact **Expand feature bar** icon at the top to show icons and feature names in single-line rows, similar to Azure portal navigation; **Collapse feature bar** restores the slim icon rail. Descriptions remain in the tool panels and feature guide rather than the navigation. Changing the toolbar width resizes the graph without clearing the selected tool or highlights. The toolbar scrolls when its contents exceed the available height, while its expand/collapse control stays available. Hover over icons or truncated names to see their full names.
+
+Selecting a tool opens one panel at a time in a docked right panel, resizing the graph rather than covering it. On narrow screens, the panel docks below the graph.
 
 Tables automatically rearrange to use both the width and height of the available canvas when a panel opens or closes, or the window resizes. Compact table cards reduce empty space between relationships without stretching their shapes. **Show whole map** also rearranges the tables; manual positions and zoom are reset on the next canvas resize. Large models and small screens may still require zooming to read individual names.
+
+Automatic layout compares deterministic arrangements and improves table ordering to reduce edge crossings and links passing behind unrelated tables. Disconnected groups are packed into the available space beside or below the connected graph instead of reserving a separate band above it. Parallel relationships use separate curves so active and inactive links remain individually visible. Dense models can still have unavoidable crossings; use focus or path highlighting to isolate the relationships you need.
 
 Table boxes progressively shrink as the model grows beyond 13 tables, from 156 x 64 down to a minimum of 120 x 52 in graph coordinates. Names wrap within the smaller boxes; their base font size stays unchanged. Automatic zoom still adapts the entire map to the canvas.
 
 Close a panel, or select its icon again, to reclaim the space. Tool selections and highlights remain; **Clear view** resets search, focus, inspection, and path selections. Opening another graph tool switches the highlighted view without losing previous selections.
 
-The top bar contains zoom and **Show whole map** controls. **Feature guide**, **Hover details**, and comparison are available from the left toolbar. A compact legend sits in the center of the bottom status bar with only Active link, Inactive link, Fact table, Dimension table, and Search match. Model metrics remain on the right on wide screens and move below the legend on smaller screens. The path swap button sits beside the stacked inputs. Relationship lists and model checks open inside the tool panel instead of floating over the graph.
+The top bar contains zoom and **Show whole map** controls. **Feature guide**, **Hover details**, and comparison are available from the left toolbar. **Hover details** has an on/off switch in the expanded bar (green means on); the eye icon toggles the same setting when collapsed. An open eye means on; a crossed-out eye means off, in either toolbar mode. Use a click, Enter, or Space to toggle relationship tooltips. A compact legend sits in the center of the bottom status bar with only Active link, Inactive link, Fact table, Dimension table, and Search match. Model metrics remain on the right on wide screens and move below the legend on smaller screens. The path swap button sits beside the stacked inputs. Relationship lists and model checks open inside the tool panel instead of floating over the graph.
 
 | Feature | What it does |
 | --- | --- |
-| Find a table | Highlights matching names and centers the map. |
+| Find a table | Highlights matching names; selecting a result centers and zooms to that table. |
 | Focus on selected tables | Emphasizes selected tables and their connecting lines without removing other tables. |
 | Table Deep Dive | Shows one table's directly connected neighbors and their relationship columns. |
 | Trace filter paths | Highlights routes from a starting table to a destination, including connections through intermediate tables. |
 | Browse relationships | Lists linked columns, filter direction, row matching, and active/inactive status. |
 | Inspect columns and formulas | Click a table to read columns, DAX measures, and detected column references in measures. |
 | Check model structure | Runs advisory checks locally without changing the model. |
-| Compare model relationships | Compares relationships between two model folders, not row data or DAX formulas. |
+| Compare two models | Compares relationships between two model folders, not row data or DAX formulas. |
+
+Search result selection stays in view after the canvas resizes. Select the same result again to return to it after panning. Click a table on the canvas to inspect its columns and formulas; selecting a search result does not open that dialog.
 
 Paths include inactive relationships and show up to 2,000 unique table routes. A highlighted path does not prove a filter is active. Fact/dimension labels are estimates, and column-reference detection is not a complete dependency analysis.
 

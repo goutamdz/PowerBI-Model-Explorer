@@ -1,5 +1,4 @@
-import { useEffect, useRef } from 'react';
-
+import { useDismissiblePanel } from '../../shared/ui/useDismissiblePanel';
 import type { EdgeDetail } from './types';
 
 interface EdgeDetailPopupProps {
@@ -8,25 +7,7 @@ interface EdgeDetailPopupProps {
 }
 
 export function EdgeDetailPopup({ edge, onClose }: EdgeDetailPopupProps) {
-  const panelRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    function handleKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') onClose();
-    }
-
-    function handleClick(e: MouseEvent) {
-      if (panelRef.current && !panelRef.current.contains(e.target as Node)) onClose();
-    }
-
-    document.addEventListener('keydown', handleKey);
-    document.addEventListener('mousedown', handleClick);
-    return () => {
-      document.removeEventListener('keydown', handleKey);
-      document.removeEventListener('mousedown', handleClick);
-    };
-  }, [onClose]);
-
+  const panelRef = useDismissiblePanel(onClose);
   const isActive = edge.active === 'true';
   const isBidirectional = edge.direction === 'both';
 
@@ -36,7 +17,6 @@ export function EdgeDetailPopup({ edge, onClose }: EdgeDetailPopupProps) {
         ref={panelRef}
         className="relative w-full max-w-sm animate-slide-up rounded-2xl border border-white/[0.06] bg-panel shadow-popup"
       >
-        {/* header */}
         <div className="flex items-center justify-between border-b border-white/[0.06] px-6 py-4">
           <h2 className="font-display text-lg font-bold text-white">How these tables connect</h2>
           <button type="button" aria-label="Close relationship details" onClick={onClose} className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-500 transition hover:bg-white/10 hover:text-white">
@@ -46,16 +26,13 @@ export function EdgeDetailPopup({ edge, onClose }: EdgeDetailPopupProps) {
           </button>
         </div>
 
-        {/* body */}
         <div className="px-6 py-4 space-y-4">
-          {/* from → to */}
           <div className="flex items-center gap-2 text-sm">
             <span className="rounded-lg bg-accent/15 px-2.5 py-1 font-semibold text-accent">{edge.source}</span>
             <span className="text-slate-500">{isBidirectional ? '↔' : '→'}</span>
             <span className="rounded-lg bg-accent/15 px-2.5 py-1 font-semibold text-accent">{edge.target}</span>
           </div>
 
-          {/* detail rows */}
           <div className="space-y-2.5">
             <DetailRow label="Column A" value={`${edge.source}[${edge.fromColumn}]`} />
             <DetailRow label="Column B" value={`${edge.target}[${edge.toColumn}]`} />

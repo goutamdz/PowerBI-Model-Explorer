@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, type ChangeEvent } from 'react';
 
 interface ModelFolderPickerProps {
   label: string;
@@ -9,6 +9,13 @@ interface ModelFolderPickerProps {
 
 export function ModelFolderPicker({ label, folderName, disabled, onSelect }: ModelFolderPickerProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+
+  function handleFolderChange(event: ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(event.currentTarget.files ?? []);
+    // Reset the input so choosing the same folder again still triggers a change.
+    event.currentTarget.value = '';
+    if (files.length > 0) onSelect(files);
+  }
 
   return (
     <div className="min-w-0 space-y-2">
@@ -21,11 +28,7 @@ export function ModelFolderPicker({ label, folderName, disabled, onSelect }: Mod
         {...{ webkitdirectory: '' }}
         disabled={disabled}
         className="hidden"
-        onChange={(event) => {
-          const files = Array.from(event.currentTarget.files ?? []);
-          event.currentTarget.value = '';
-          if (files.length > 0) onSelect(files);
-        }}
+        onChange={handleFolderChange}
       />
       <button
         type="button"

@@ -7,6 +7,7 @@ const paths = {
   checks: 'M9 5H5v16h14V5h-4M9 3h6v4H9V3m-1 11 3 3 5-6',
   compare: 'M4 7h16m-4-4 4 4-4 4M20 17H4m4-4-4 4 4 4',
   hover: 'M3 12s3-7 9-7 9 7 9 7-3 7-9 7-9-7-9-7m12 0a3 3 0 1 1-6 0 3 3 0 0 1 6 0',
+  hoverOff: 'M3 3l18 18M10 5.2A10 10 0 0 1 12 5c6 0 9 7 9 7a16 16 0 0 1-2.6 3.5M6.5 6.5A19 19 0 0 0 3 12s3 7 9 7a10 10 0 0 0 4.5-1M9.9 9.9a3 3 0 0 0 4.2 4.2',
   help: 'M9 9a3 3 0 1 1 5 2c-2 1-2 2-2 3m0 3h.01M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0',
   close: 'm6 6 12 12M6 18 18 6',
   fit: 'M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5',
@@ -14,6 +15,8 @@ const paths = {
   minus: 'M5 12h14',
   clear: 'M3 11a9 9 0 1 1 3 8M3 4v7h7',
   swap: 'M7 20V4m-4 4 4-4 4 4m6-4v16m-4-4 4 4 4-4',
+  expand: 'M3 4h18v16H3V4m5 0v16m5-12 4 4-4 4',
+  collapse: 'M3 4h18v16H3V4m5 0v16m9-12-4 4 4 4',
 };
 
 export function ToolIcon({ name }: { name: keyof typeof paths }) {

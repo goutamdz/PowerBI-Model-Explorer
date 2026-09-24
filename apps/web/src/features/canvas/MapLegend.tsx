@@ -12,8 +12,11 @@ export function MapLegend() {
       <ul className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 py-1">
         {legendItems.map(({ label, hint, swatch }) => (
           <li key={label} title={hint} className="flex items-center gap-1.5 whitespace-nowrap text-[10px] text-slate-400">
-            <span aria-hidden="true" className="flex w-4 shrink-0 justify-center"><span className={swatch} /></span>
-            <span>{label}</span><span className="sr-only">: {hint}</span>
+            <span aria-hidden="true" className="flex w-4 shrink-0 justify-center">
+              <span className={swatch} />
+            </span>
+            <span>{label}</span>
+            <span className="sr-only">: {hint}</span>
           </li>
         ))}
       </ul>
