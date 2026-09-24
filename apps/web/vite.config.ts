@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import deployment from '../../vercel.json';
+import deployment from './vercel.json';
 
 export default defineConfig({
   plugins: [react()],

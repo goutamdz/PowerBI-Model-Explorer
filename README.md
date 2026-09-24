@@ -151,13 +151,13 @@ Paths include inactive relationships and show up to 2,000 unique table routes. A
 
 4. Select **Choose model folder** and choose the `.SemanticModel` directory containing `definition/`, or select **Explore demo model**.
 
-For a production-style local preview, run `npm run build`, then `npm run preview --workspace apps/web`. The preview applies the same security headers as Vercel.
+For a production-style local preview, run `npm run build`, then `npm run preview`. The preview applies the same security headers as Vercel.
 
 ## Deploy on Vercel
 
-Import the repository with the repository root as the Vercel Root Directory. Use Node.js 22.12+ or 24. The root `vercel.json` supplies the Vite build command, `apps/web/dist` output directory, and production security headers. The optional `api/health.ts` function is the only backend endpoint. No model-processing server, AI token, or environment variables are needed.
+Import the repository and set `apps/web` as the Vercel Root Directory. Use Node.js 22.12+ or 24. The web app's `vercel.json` supplies the Vite build command, `dist` output directory, and production security headers. Repository-root deployments are also supported by the root `vercel.json`. No model-processing server, AI token, or environment variables are needed.
 
-Do not reintroduce upload endpoints, cloud AI calls, or analytics that collect model metadata without changing the privacy contract. Hosting the frontend and health function together does not move user-model processing off the device.
+Do not reintroduce upload endpoints, cloud AI calls, or analytics that collect model metadata without changing the privacy contract. Hosting the frontend does not move user-model processing off the device.
 
 ## Bundled demo
 
@@ -180,7 +180,7 @@ Only the details used by the visualizer are saved. Power Query partitions, conne
 To replace the demo from a local model, run:
 
 ```powershell
-npm run demo:export --workspace apps/web -- "C:\Users\DELL\Desktop\Demo.SemanticModel"
+npm run demo:export -- "C:\Users\DELL\Desktop\Demo.SemanticModel"
 ```
 
 This reads table and relationship definitions without modifying the supplied folder. It replaces the extracted fixture at `apps/web/demo-source/Demo.SemanticModel/definition/demo.tmdl` and updates the bundled `apps/web/src/demo/model.json`, removing the synthetic extensions unless they are present in the supplied model. Review names and DAX before using another model as the public demo.
@@ -188,7 +188,7 @@ This reads table and relationship definitions without modifying the supplied fol
 To regenerate it locally after deliberately changing the source fixture:
 
 ```bash
-npm run demo:export --workspace apps/web
+npm run demo:export
 ```
 
 The extracted fixture is excluded from Vercel deployment uploads by `.vercelignore`; the generated browser demo is bundled with the app. No access to the original local model folder is needed to build, test, or regenerate the saved demo.
